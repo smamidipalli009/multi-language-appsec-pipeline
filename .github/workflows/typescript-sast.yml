@@ -6,9 +6,9 @@ name: TypeScript - SAST (CodeQL)
 # CodeQL's JS/TS extractor works directly on source files.
 
 on:
-  push:
-    branches: [main]
-    paths: [src/typescript/**]
+#  push:
+#    branches: [main]
+#    paths: [src/typescript/**]
   pull_request:
     branches: [main]
     paths: [src/typescript/**]
