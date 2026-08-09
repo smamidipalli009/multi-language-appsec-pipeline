@@ -7,8 +7,6 @@ COPY main_fixed.go .
 RUN go mod tidy
 RUN go mod download
 RUN CGO_ENABLED=1 GOOS=linux go build -o server main_fixed.go
-# Verify binary was created
-RUN ls -la /app/server && /app/server --help || true
 
 # Stage 2: alpine slim (not distroless) — has musl libc needed by CGO
 FROM alpine:3.19
