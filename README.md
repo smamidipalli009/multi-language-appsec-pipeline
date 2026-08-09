@@ -1,15 +1,24 @@
-# DevSecOps Security Pipeline
+# Multi-Language AppSec Pipeline
 
-![Python SAST](https://github.com/smamidipalli009/devsecops-security-pipeline/actions/workflows/python-sast.yml/badge.svg)
-![Python SCA](https://github.com/smamidipalli009/devsecops-security-pipeline/actions/workflows/python-sca.yml/badge.svg)
-![Python DAST](https://github.com/smamidipalli009/devsecops-security-pipeline/actions/workflows/python-dast.yml/badge.svg)
-![Java SAST](https://github.com/smamidipalli009/devsecops-security-pipeline/actions/workflows/java-sast.yml/badge.svg)
-![Java SCA](https://github.com/smamidipalli009/devsecops-security-pipeline/actions/workflows/java-sca.yml/badge.svg)
-![Java DAST](https://github.com/smamidipalli009/devsecops-security-pipeline/actions/workflows/java-dast.yml/badge.svg)
+![Python SAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/python-sast.yml/badge.svg)
+![Python SCA](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/python-sca.yml/badge.svg)
+![Python DAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/python-dast.yml/badge.svg)
+![Java SAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/java-sast.yml/badge.svg)
+![Java SCA](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/java-sca.yml/badge.svg)
+![Java DAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/java-dast.yml/badge.svg)
+![Go SAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/go-sast.yml/badge.svg)
+![Go SCA](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/go-sca.yml/badge.svg)
+![Go DAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/go-dast.yml/badge.svg)
+![JavaScript SAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/javascript-sast.yml/badge.svg)
+![JavaScript SCA](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/javascript-sca.yml/badge.svg)
+![JavaScript DAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/javascript-dast.yml/badge.svg)
+![TypeScript SAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/typescript-sast.yml/badge.svg)
+![TypeScript SCA](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/typescript-sca.yml/badge.svg)
+![TypeScript DAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/typescript-dast.yml/badge.svg)
 
-An end-to-end DevSecOps pipeline covering all three core security testing
-layers — **SAST**, **SCA**, and **DAST** — across multiple languages, with
-separate, independently triggerable workflow files per language per layer.
+An end-to-end application security pipeline covering all three core testing
+layers — **SAST**, **SCA**, and **DAST** — across 5 languages, with separate
+independently triggerable workflow files per language per layer.
 
 ---
 
@@ -19,76 +28,32 @@ separate, independently triggerable workflow files per language per layer.
 Code push
     │
     ├── SAST (CodeQL)    → scans source code for vulnerabilities
-    │                      Requires build step for Java
+    │                      Interpreted: Python, JavaScript, TypeScript — no build needed
+    │                      Compiled: Java (mvn), Go (go build) — build step required
     │
-    ├── SCA  (Trivy)     → builds Docker image, scans for CVEs
+    ├── SCA  (Trivy)     → builds Docker image, scans for CVEs in OS + deps
     │                      Gates build on HIGH/CRITICAL fixable vulns
-    │                      Generates SBOM, pushes to GHCR if clean
+    │                      Generates SBOM (CycloneDX), pushes to GHCR if clean
     │
-    └── DAST (OWASP ZAP) → spins up container → ZAP scans live app
-                           Finds runtime issues: missing headers,
+    └── DAST (OWASP ZAP) → spins up container → ZAP baseline scans live app
+                           Finds runtime issues: missing security headers,
                            exposed endpoints, misconfigured CORS
+                           Results uploaded to Security tab as SARIF
 ```
 
 ---
 
 ## Current status
 
-| Language | SAST | SCA | DAST | Docker | Framework |
-|---|---|---|---|---|---|
-| **Python** | ✅ CodeQL | ✅ Trivy | ✅ OWASP ZAP | ✅ Distroless | Flask |
-| **Java** | ✅ CodeQL | ✅ Trivy | ✅ OWASP ZAP | ✅ Distroless | Spring Boot |
+| Language | SAST | SCA | DAST | Docker base | Framework | Port |
+|---|---|---|---|---|---|---|
+| **Python** | ✅ | ✅ | ✅ | Distroless Python3 | Flask | 5001 |
+| **Java** | ✅ | ✅ | ✅ | Distroless Java17 | Spring Boot | 8081 |
+| **Go** | ✅ | ✅ | ✅ | Alpine 3.19 | net/http | 9001 |
+| **JavaScript** | ✅ | ✅ | ✅ | Distroless Node20 | Express.js | 9002 |
+| **TypeScript** | ✅ | ✅ | ✅ | Distroless Node20 | Express.js | 9003 |
 
----
-
-## Real findings (from live pipeline runs)
-
-**407 total code scanning alerts** across all languages and tools.
-
-### Python — CodeQL SAST findings (19 alerts)
-
-| Severity | Finding | File | Line |
-|---|---|---|---|
-| Critical | Uncontrolled command line | `app.py` | 62 |
-| High | Reflected XSS | `app.py` | 63 |
-| High | Reflected XSS | `app_fixed.py` | 69 |
-| High | SQL query from user-controlled sources | `app.py` | 48 |
-| High | Uncontrolled data in path expression | `app.py` | 76 |
-| High | Uncontrolled data in path expression | `app_fixed.py` | 83 |
-| High | Flask app in debug mode | `app.py` | 87 |
-
-### Python — OWASP ZAP DAST findings
-
-| Severity | Finding | Fix |
-|---|---|---|
-| Warning | Storable and Cacheable Content | Add `Cache-Control: no-store` |
-| Warning | CSP Header Not Set | Add `Content-Security-Policy` header |
-| Warning | Server Leaks Version | Hide `Server` header via reverse proxy |
-| Warning | Permissions Policy Not Set | Add `Permissions-Policy` header |
-
-### Java — CodeQL SAST findings (7 open, 7 closed)
-
-| Severity | Finding | File | Line |
-|---|---|---|---|
-| Critical | Server-side request forgery | `AppFixed.java` | 102 |
-| Critical | Uncontrolled command line | `AppFixed.java` | 62 |
-| Critical | Building command line with string concatenation | `App.java` | 43 |
-| High | Cross-site scripting | `AppFixed.java` | 105 |
-| High | Query built from untrusted string | `App.java` | 35 |
-| Medium | Executing command with relative path | `AppFixed.java` | 62 |
-| Medium | Executing command with relative path | `App.java` | 43 |
-
-### Java — Trivy SCA findings (Critical CVEs in Spring Boot)
-
-| Severity | CVE | Library |
-|---|---|---|
-| Critical | Tomcat console manipulation | `tomcat-embed-core-10.1.2` |
-| Critical | Client cert verification bypass | `tomcat-embed-core-10.1.2` |
-| Critical | RCE via TOCTOU in JSP compilation | `tomcat-embed-core-10.1.2` |
-| Critical | Improper authorization bypass | `tomcat-coyote` |
-| Critical | Authentication bypass via digest auth | `tomcat-coyote` |
-| Critical | HTTP/2 headers not validated | `tomcat-coyote` |
-| Critical | zlib integer overflow (heap-based buffer overflow) | `zlib` |
+**98 total workflow runs** — **538 code scanning alerts** across all languages
 
 ---
 
@@ -98,182 +63,262 @@ Code push
 .
 ├── src/
 │   ├── python/
-│   │   ├── app.py              # vulnerable Flask app (5 intentional CVEs)
-│   │   ├── app_fixed.py        # hardened — all findings patched
+│   │   ├── app.py              # vulnerable (5 CVEs)
+│   │   ├── app_fixed.py        # hardened
 │   │   ├── requirements.txt
-│   │   └── Dockerfile          # multi-stage, distroless, non-root
-│   │
-│   └── java/
-│       ├── src/main/java/com/devsecops/
-│       │   ├── App.java        # vulnerable code (6 intentional CVEs)
-│       │   └── AppFixed.java   # hardened Spring Boot app
-│       ├── pom.xml
-│       └── Dockerfile          # multi-stage, distroless java17
+│   │   └── Dockerfile
+│   ├── java/
+│   │   ├── src/main/java/com/devsecops/
+│   │   │   ├── App.java        # vulnerable (6 CVEs)
+│   │   │   └── AppFixed.java   # hardened
+│   │   ├── pom.xml
+│   │   └── Dockerfile
+│   ├── go/
+│   │   ├── main.go             # vulnerable (5 CVEs, //go:build ignore)
+│   │   ├── main_fixed.go       # hardened
+│   │   ├── go.mod
+│   │   └── Dockerfile
+│   ├── javascript/
+│   │   ├── app.js              # vulnerable (6 CVEs)
+│   │   ├── app_fixed.js        # hardened
+│   │   ├── package.json
+│   │   └── Dockerfile
+│   └── typescript/
+│       ├── src/app.ts          # vulnerable (6 CVEs)
+│       ├── src/app_fixed.ts    # hardened
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── Dockerfile
 │
 ├── scripts/
-│   └── zap_to_sarif.py         # converts ZAP JSON report to SARIF
+│   └── zap_to_sarif.py         # converts ZAP JSON → SARIF for Security tab
 │
 ├── .zap/
 │   └── rules.tsv               # ZAP false-positive suppression rules
 │
 ├── .github/workflows/
-│   ├── python-sast.yml         # Python CodeQL
-│   ├── python-sca.yml          # Python Trivy
-│   ├── python-dast.yml         # Python OWASP ZAP
-│   ├── java-sast.yml           # Java CodeQL (needs mvn compile)
-│   ├── java-sca.yml            # Java Trivy
-│   └── java-dast.yml           # Java OWASP ZAP
+│   ├── python-sast.yml
+│   ├── python-sca.yml
+│   ├── python-dast.yml
+│   ├── java-sast.yml
+│   ├── java-sca.yml
+│   ├── java-dast.yml
+│   ├── go-sast.yml
+│   ├── go-sca.yml
+│   ├── go-dast.yml
+│   ├── javascript-sast.yml
+│   ├── javascript-sca.yml
+│   ├── javascript-dast.yml
+│   ├── typescript-sast.yml
+│   ├── typescript-sca.yml
+│   └── typescript-dast.yml
 │
-├── docs/screenshots/           # pipeline and security tab screenshots
-└── README.md
+└── docs/screenshots/
 ```
 
 ---
 
-## Python — vulnerabilities (before/after)
+## Vulnerabilities per language (before/after)
 
-`app.py` contains **5 intentional vulnerabilities**. `app_fixed.py` patches all of them.
-
-| # | Vulnerability | CodeQL Rule | Fix |
-|---|---|---|---|
-| 1 | SQL Injection | `py/sql-injection` | Parameterised query `?` placeholder |
-| 2 | Command Injection | `py/command-injection` | `subprocess` list args, no `shell=True` |
-| 3 | Path Traversal | `py/path-injection` | `os.path.basename()` + fixed safe directory |
-| 4 | Hardcoded Credentials | `py/hardcoded-credentials` | Load from environment variables |
-| 5 | Flask Debug Mode | `py/flask-debug` | `debug` driven by env var, defaults to `False` |
-
----
-
-## Java — vulnerabilities (before/after)
-
-`App.java` contains **6 intentional vulnerabilities**. `AppFixed.java` patches all of them.
+### Python — 5 vulnerabilities
 
 | # | Vulnerability | CodeQL Rule | Fix |
 |---|---|---|---|
-| 1 | SQL Injection | `java/sql-injection` | `PreparedStatement` with `?` placeholder |
-| 2 | Command Injection | `java/command-line-injection` | `ProcessBuilder` with list args |
-| 3 | Path Traversal | `java/path-injection` | `Path.normalize()` + safe directory check |
-| 4 | Hardcoded Credentials | `java/hardcoded-password-field` | Load from environment variables |
-| 5 | XXE | `java/xxe` | Disable DOCTYPE + external entities in parser |
-| 6 | SSRF | `java/ssrf` | Allowlist of permitted hosts |
+| 1 | SQL Injection | `py/sql-injection` | Parameterised query |
+| 2 | Command Injection | `py/command-injection` | `subprocess` list args |
+| 3 | Path Traversal | `py/path-injection` | `os.path.basename()` + safe dir |
+| 4 | Hardcoded Credentials | `py/hardcoded-credentials` | Environment variables |
+| 5 | Flask Debug Mode | `py/flask-debug` | `debug` from env var |
+
+### Java — 6 vulnerabilities
+
+| # | Vulnerability | CodeQL Rule | Fix |
+|---|---|---|---|
+| 1 | SQL Injection | `java/sql-injection` | `PreparedStatement` |
+| 2 | Command Injection | `java/command-line-injection` | `ProcessBuilder` list args |
+| 3 | Path Traversal | `java/path-injection` | `Path.normalize()` + safe dir |
+| 4 | Hardcoded Credentials | `java/hardcoded-password-field` | Environment variables |
+| 5 | XXE | `java/xxe` | Disable DOCTYPE + external entities |
+| 6 | SSRF | `java/ssrf` | Host allowlist |
+
+### Go — 5 vulnerabilities
+
+| # | Vulnerability | CodeQL Rule | Fix |
+|---|---|---|---|
+| 1 | SQL Injection | `go/sql-injection` | Parameterised query |
+| 2 | Command Injection | `go/command-injection` | `exec.Command` list args |
+| 3 | Path Traversal | `go/path-injection` | `filepath.Base()` + safe dir |
+| 4 | Hardcoded Credentials | `go/hardcoded-credentials` | `os.Getenv()` |
+| 5 | SSRF | `go/ssrf` | Host allowlist |
+
+### JavaScript — 6 vulnerabilities
+
+| # | Vulnerability | CodeQL Rule | Fix |
+|---|---|---|---|
+| 1 | SQL Injection | `js/sql-injection` | Parameterised query |
+| 2 | Command Injection | `js/command-line-injection` | `execFile` list args |
+| 3 | Path Traversal | `js/path-injection` | `path.basename()` + safe dir |
+| 4 | Hardcoded Credentials | `js/hardcoded-credentials` | `process.env` |
+| 5 | Prototype Pollution | `js/prototype-pollution` | `Object.hasOwn()` check |
+| 6 | ReDoS | `js/redos` | Safe non-backtracking regex |
+
+### TypeScript — 6 vulnerabilities
+
+| # | Vulnerability | CodeQL Rule | Fix |
+|---|---|---|---|
+| 1 | SQL Injection | `js/sql-injection` | Parameterised query |
+| 2 | Command Injection | `js/command-line-injection` | `execFile` list args |
+| 3 | Path Traversal | `js/path-injection` | `path.basename()` + safe dir |
+| 4 | Hardcoded Credentials | `js/hardcoded-credentials` | `process.env` |
+| 5 | Unsafe Deserialization | `js/unsafe-deserialization` | Schema validation |
+| 6 | Type Assertion Abuse | Type guard | Proper type guard |
 
 ---
 
-## Workflow files
+## Workflow files (15 total)
 
-| File | Layer | Language | Trigger | Fails build? |
+| File | Layer | Language | Build step | Fails build? |
 |---|---|---|---|---|
-| `python-sast.yml` | SAST | Python | Push/PR to `main`, weekly | No — reports only |
-| `python-sca.yml` | SCA | Python | Push/PR to `main`, weekly | Yes — HIGH/CRITICAL fixable |
-| `python-dast.yml` | DAST | Python | After SCA passes, manual | No — reports only |
-| `java-sast.yml` | SAST | Java | Push/PR to `main`, weekly | No — reports only |
-| `java-sca.yml` | SCA | Java | Push/PR to `main`, weekly | Yes — HIGH/CRITICAL fixable |
-| `java-dast.yml` | DAST | Java | After SCA passes, manual | No — reports only |
+| `python-sast.yml` | SAST | Python | None | No |
+| `python-sca.yml` | SCA | Python | Docker | Yes — HIGH/CRITICAL |
+| `python-dast.yml` | DAST | Python | Docker | No |
+| `java-sast.yml` | SAST | Java | `mvn compile` | No |
+| `java-sca.yml` | SCA | Java | Docker + Maven | Yes — HIGH/CRITICAL |
+| `java-dast.yml` | DAST | Java | Docker + Maven | No |
+| `go-sast.yml` | SAST | Go | `go build` | No |
+| `go-sca.yml` | SCA | Go | Docker | Yes — HIGH/CRITICAL |
+| `go-dast.yml` | DAST | Go | Docker | No |
+| `javascript-sast.yml` | SAST | JavaScript | None | No |
+| `javascript-sca.yml` | SCA | JavaScript | Docker | Yes — HIGH/CRITICAL |
+| `javascript-dast.yml` | DAST | JavaScript | Docker | No |
+| `typescript-sast.yml` | SAST | TypeScript | None (CodeQL handles TS) | No |
+| `typescript-sca.yml` | SCA | TypeScript | Docker + tsc | Yes — HIGH/CRITICAL |
+| `typescript-dast.yml` | DAST | TypeScript | Docker + tsc | No |
 
 ---
 
-## Why separate workflow files per language per layer
+## Real findings (538 total code scanning alerts)
 
-Each layer has a different trigger rhythm and execution requirement:
-- **SAST** runs on every push — no build needed for interpreted languages
-- **SCA** needs a Docker build — runs after code is committed
-- **DAST** needs a running container — triggered after SCA passes
+### Python — CodeQL SAST (19 alerts)
 
-Merging them into one file would mean a DAST failure blocks a SAST-only PR check.
-Separate files keep concerns independent and failures isolated.
+| Severity | Finding | File |
+|---|---|---|
+| Critical | Uncontrolled command line | `app.py:62` |
+| High | Reflected XSS | `app.py:63` |
+| High | SQL query from user input | `app.py:48` |
+| High | Uncontrolled path expression | `app.py:76` |
+| High | Flask debug mode | `app.py:87` |
 
----
+### Python — OWASP ZAP DAST
 
-## Security tab
-
-All scan results land in **Security → Code scanning alerts**, tagged by category:
-
-| Category | Source |
+| Severity | Finding |
 |---|---|
-| `sast-python` | CodeQL — Python source code |
-| `sca-python` | Trivy — Python Docker image |
-| `dast-python` | OWASP ZAP — running Python app |
-| `sast-java` | CodeQL — Java source code |
-| `sca-java` | Trivy — Java Docker image |
-| `dast-java` | OWASP ZAP — running Java app |
+| Warning | CSP Header Not Set |
+| Warning | Server Leaks Version |
+| Warning | Storable and Cacheable Content |
+| Warning | Permissions Policy Not Set |
+
+### Java — CodeQL SAST (7 open, 7 closed)
+
+| Severity | Finding | File |
+|---|---|---|
+| Critical | Server-side request forgery | `AppFixed.java:102` |
+| Critical | Uncontrolled command line | `AppFixed.java:62` |
+| Critical | Command line string concatenation | `App.java:43` |
+| High | Cross-site scripting | `AppFixed.java:105` |
+| High | Query from untrusted string | `App.java:35` |
+
+### Java — Trivy SCA (Critical CVEs)
+
+| Library | CVE type |
+|---|---|
+| `tomcat-embed-core-10.1.2` | RCE, auth bypass, HTTP/2 injection |
+| `tomcat-coyote` | Authorization bypass, digest auth bypass |
+| `zlib` | Integer overflow (heap buffer overflow) |
+
+---
+
+## Security tab categories
+
+| Category | Tool | Language |
+|---|---|---|
+| `sast-python` | CodeQL | Python |
+| `sca-python` | Trivy | Python |
+| `dast-python` | OWASP ZAP | Python |
+| `sast-java` | CodeQL | Java |
+| `sca-java` | Trivy | Java |
+| `dast-java` | OWASP ZAP | Java |
+| `sast-go` | CodeQL | Go |
+| `sca-go` | Trivy | Go |
+| `dast-go` | OWASP ZAP | Go |
+| `sast-javascript` | CodeQL | JavaScript |
+| `sca-javascript` | Trivy | JavaScript |
+| `dast-javascript` | OWASP ZAP | JavaScript |
+| `sast-typescript` | CodeQL | TypeScript |
+| `sca-typescript` | Trivy | TypeScript |
+| `dast-typescript` | OWASP ZAP | TypeScript |
 
 ---
 
 ## Setup
 
 ```bash
-git clone https://github.com/smamidipalli009/devsecops-security-pipeline.git
-cd devsecops-security-pipeline
+git clone https://github.com/smamidipalli009/multi-language-appsec-pipeline.git
+cd multi-language-appsec-pipeline
 ```
 
-Workflows trigger automatically on push to `main`. For manual runs:
-**Actions tab → select workflow → Run workflow**
+Workflows trigger automatically on push to `main`.
+For manual runs: **Actions tab → select workflow → Run workflow**
 
 ### Runner requirements
 
-All workflows run on a self-hosted runner with labels:
 ```
 self-hosted, Linux, X64, secops_machine
 ```
 
-Runner dependencies:
-- Docker
-- Git
-- curl
-- Python 3
-- Java 17 + Maven (for Java workflows)
+Dependencies: Docker, Git, curl, Python 3, Java 17 + Maven, Go 1.21
 
 ---
 
 ## Screenshots
 
-### All workflow runs
+### All workflow runs (98 runs, 15 workflows)
 ![Workflow Runs](docs/screenshots/workflow-all.png)
 
----
+### Go SAST — CodeQL
+![Go SAST](docs/screenshots/go-sast.png)
 
-### Python DAST — OWASP ZAP runs
-![Python DAST](docs/screenshots/python-dast.png)
+### Go DAST — OWASP ZAP
+![Go DAST](docs/screenshots/go-dast.png)
 
----
+### Go SCA — Trivy
+![Go SCA](docs/screenshots/go-sca.png)
 
-### Python SAST — CodeQL runs
-![Python SAST](docs/screenshots/python-sast.png)
+### JavaScript SAST — CodeQL
+![JavaScript SAST](docs/screenshots/javascript-sast.png)
 
----
+### JavaScript DAST — OWASP ZAP
+![JavaScript DAST](docs/screenshots/javascript-dast.png)
 
-### Python SCA — Trivy runs (gating HIGH/CRITICAL)
-![Python SCA](docs/screenshots/python-sca.png)
+### JavaScript SCA — Trivy
+![JavaScript SCA](docs/screenshots/javascript-sca.png)
 
----
+### TypeScript SAST — CodeQL
+![TypeScript SAST](docs/screenshots/typescript-sast.png)
 
-### Java DAST — OWASP ZAP runs
-![Java DAST](docs/screenshots/java-dast.png)
+### TypeScript DAST — OWASP ZAP
+![TypeScript DAST](docs/screenshots/typescript-dast.png)
 
----
-
-### Java SAST — CodeQL runs
-![Java SAST](docs/screenshots/java-sast.png)
-
----
-
-### Java SCA — Trivy runs
-![Java SCA](docs/screenshots/java-sca.png)
-
----
-
-### Code scanning — 407 alerts (Trivy CVEs)
+### Code scanning — all alerts
 ![Code Scanning All](docs/screenshots/code-scanning-all.png)
 
----
-
-### Code scanning — Python findings (CodeQL + ZAP)
+### Code scanning — Python findings
 ![Code Scanning Python](docs/screenshots/code-scanning-python.png)
 
----
-
-### Code scanning — Java findings (CodeQL)
+### Code scanning — Java findings
 ![Code Scanning Java](docs/screenshots/code-scanning-java.png)
 
 ---
 
+> Add new screenshots to `docs/screenshots/` and commit:
+> `git add docs/screenshots/ && git commit -m "docs: add screenshots"`
