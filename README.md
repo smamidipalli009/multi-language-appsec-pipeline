@@ -319,6 +319,3 @@ Dependencies: Docker, Git, curl, Python 3, Java 17 + Maven, Go 1.21
 ![Code Scanning Java](docs/screenshots/code-scanning-java.png)
 
 ---
-
-> Add new screenshots to `docs/screenshots/` and commit:
-> `git add docs/screenshots/ && git commit -m "docs: add screenshots"`
