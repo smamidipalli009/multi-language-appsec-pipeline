@@ -16,9 +16,7 @@
 ![TypeScript SCA](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/typescript-sca.yml/badge.svg)
 ![TypeScript DAST](https://github.com/smamidipalli009/multi-language-appsec-pipeline/actions/workflows/typescript-dast.yml/badge.svg)
 
-An end-to-end application security pipeline covering all three core testing
-layers — **SAST**, **SCA**, and **DAST** — across 5 languages, with separate
-independently triggerable workflow files per language per layer.
+An end-to-end application security pipeline covering all three core testing layers — **SAST**, **SCA**, and **DAST** — across 5 languages, with separate independently triggerable workflow files per language per layer.
 
 ---
 
